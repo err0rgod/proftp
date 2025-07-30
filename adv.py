@@ -5,8 +5,8 @@ from  queue import Queue
 
 
 combo_queue = Queue()
-result_lock = Lock()
-stop_event = Event()
+result_lock = threading.Lock()
+stop_event = threading.Event()
 
 
 parser = argparse.ArgumentParser(description="Basic FTP tester")
