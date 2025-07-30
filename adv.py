@@ -83,8 +83,8 @@ truepasswd = None
 if mutant:
     for userc in users:
         for base in passwords:
-            for password in smart_mutate(base):
-                combo_queue.put((userc, password))
+            for passwords in smart_mutate(base):
+                combo_queue.put((userc, passwords))
 else:
     for userc in users:
         for password in passwords:

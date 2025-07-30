@@ -2,7 +2,6 @@
 password
 12345678
 1234
-pussy
 12345
 dragon
 qwerty
@@ -17,4 +16,3 @@ shadow
 monkey
 abc123
 pass
-fuckme
