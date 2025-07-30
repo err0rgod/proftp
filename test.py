@@ -8,8 +8,8 @@ parser = argparse.ArgumentParser(description="Basic FTP tester")
 
 parser.add_argument("-ho","--host",required=True, type=str, help="Enter the target to test ftp")
 parser.add_argument("-p","--passfile",required=True,type=str,help="Enter the path of file containing password list")
-parser.add_argument("-t","--threads",type=int,help="enter the number of threads. Default : 20")
-parser.add_argument("-u","--user",default=20,required=True,type=str,help="enter the Username to connect to provided host")
+parser.add_argument("-t","--threads",default=20,type=int,help="enter the number of threads. Default : 20")
+parser.add_argument("-u","--user",required=True,type=str,help="enter the Username to connect to provided host")
 
 args = parser.parse_args()
 
@@ -21,12 +21,34 @@ passfile = args.passfile
 threads = args.threads if args.threads else 20
 
 
+
 def passwd(passfile):
     with open(passfile , 'r', encoding='utf-8') as f:
         return[line.strip('\n') for line in f]
 
+
+
+
+
+
 passwords = passwd(passfile)
-passwords_iter = iter(passwords)
+
+
+pass_queue = Queue()
+for pwd in passwords:
+    pass_queue.put(pwd)
+
+
+while not event_done.is_set() and not pass_queue.empty():
+    try:
+        password = pass_queue.get_nowait()
+    except queue.Empty:
+        break
+    ...
+
+
+
+
 event_done = threading.Event()
 
 trueuser = None
