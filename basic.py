@@ -1,9 +1,9 @@
 import ftplib
 
 
-host = "steminfinity.in"
-user = "testuser"
-password = "testpass"
+host = "test.rebex.net"
+user = "demo"
+password = "password"
 
 try:
     with ftplib.FTP() as serve:
