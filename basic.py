@@ -1,5 +1,9 @@
 import ftplib
+import argparse
 
+
+
+parser = argparse.ArgumentParser(description="Basic FTP tester")
 
 host = "test.rebex.net"
 user = "demo"
