@@ -27,7 +27,7 @@ def passwd(passfile):
 
 passwords = passwd(passfile)
 passwords_iter = iter(passwords)
-event_done = threading.event()
+event_done = threading.Event()
 
 
 
@@ -72,8 +72,8 @@ def workers():
 
 
 
-threads = []
-for _ in range(threads = 20):
+threads = [20]
+for _ in range(threads):
     t= threading.Thread(target=workers)
     t.start()
     threads.append
