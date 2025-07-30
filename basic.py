@@ -34,7 +34,10 @@ for password in passwords:
         with ftplib.FTP() as serve:
             serve.connect(host,21,timeout=5)
             serve.login(user,password)
-            print(f"Connection Successfull with {host} by {user}  :   {password}")
+            print("||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||")
+            print("===========================================================================\n")
+            print(" The Password was Found and Connection was Success\n")
+            print(f"Connect with {host} as {user}  :   {password}\n")
             break
 
 
