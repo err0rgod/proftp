@@ -9,7 +9,7 @@ parser = argparse.ArgumentParser(description="Basic FTP tester")
 parser.add_argument("-ho","--host",required=True, type=str, help="Enter the target to test ftp")
 parser.add_argument("-p","--passfile",required=True,type=str,help="Enter the path of file containing password list")
 parser.add_argument("-t","--threads",type=int,help="enter the number of threads. Default : 20")
-parser.add_argument("-u","--user",required=True,type=str,help="enter the Username to connect to provided host")
+parser.add_argument("-u","--user",default=20,required=True,type=str,help="enter the Username to connect to provided host")
 
 args = parser.parse_args()
 
@@ -18,7 +18,7 @@ args = parser.parse_args()
 host = args.host
 user = args.user
 passfile = args.passfile
-threads = args.threads
+threads = args.threads if args.threads else 20
 
 
 def passwd(passfile):
@@ -45,6 +45,7 @@ def workers():
                 print("===========================================================================\n")
                 print(" The Password was Found and Connection was Success\n")
                 print(f"Connect with {host} as {user}  :   {password}\n")
+                event_done.set()
                 break
         
         except Exception as e:
@@ -72,13 +73,13 @@ def workers():
 
 
 
-threads = [20]
+thread_list = []
 for _ in range(threads):
     t= threading.Thread(target=workers)
     t.start()
-    threads.append
+    thread_list.append
 
 
 
-for t in threads:
+for t in thread_list:
     t.join()
