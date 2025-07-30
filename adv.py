@@ -24,6 +24,14 @@ threads = args.threads if args.threads else 20
 def passwd(passfile):
     with open(passfile , 'r', encoding='utf-8') as f:
         return[line.strip('\n') for line in f]
+    
+
+
+def userb(user):
+    with open(user , 'r' , encoding='utf-8') as f:
+        return[line.strip('\n') for line in f]
+    
+users = userb(user)
 
 passwords = passwd(passfile)
 passwords_iter = iter(passwords)
@@ -35,6 +43,29 @@ truepasswd = None
 
 
 
+def smart_mutate(base_word):
+    leet_map = {'a': '@', 'i': '1', 'e': '3', 'o': '0', 's': '$'}
+
+    mutations = set()
+
+    # Basic variations
+    mutations.add(base_word)
+    mutations.add(base_word.capitalize())
+    mutations.add(base_word.upper())
+
+    # Common suffixes
+    suffixes = ["123", "!", "2024", "@"]
+    for word in list(mutations):
+        for suffix in suffixes:
+            mutations.add(word + suffix)
+
+    # Leetspeak (simple version)
+    for word in list(mutations):
+        for orig, repl in leet_map.items():
+            if orig in word:
+                mutations.add(word.replace(orig, repl))
+
+    return mutations
 
 
 
@@ -55,14 +86,14 @@ def workers():
                 print("||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||")
                 print("===========================================================================\n")
                 print(" The Password was Found and Connection was Success\n")
-                print(f"Connect with {host} as {user}  :   {password}\n")
-                trueuser = user
+                print(f"Connect with {host} as {users}  :   {password}\n")
+                trueuser = users
                 truepasswd = password
                 event_done.set()
                 break
         
         except Exception as e:
-            print(f"Connection failed with {user}  :   {password}")
+            print(f"Connection failed with {users}  :   {password}")
 
 
 
