@@ -40,7 +40,7 @@ def userb(user):
 users = userb(user)
 
 passwords = passwd(passfile)
-passwords_iter = iter(passwords)
+#passwords_iter = iter(passwords)
 event_done = threading.Event()
 
 trueuser = None
