@@ -5,6 +5,11 @@ import argparse
 
 parser = argparse.ArgumentParser(description="Basic FTP tester")
 
+
+parser.add_argument("-h","--host",required=True, type=str, help="Enter the target to test ftp")
+parser.add_argument("-p","--passfile",required=True,type=str,help="Enter the path of file containing password list")
+parser.add_argument("-t","--threads",type=int,help="enter the number of threads")
+
 host = "test.rebex.net"
 user = "demo"
 password = "password"
