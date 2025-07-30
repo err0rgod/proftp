@@ -16,7 +16,7 @@ parser.add_argument("-ho","--host",required=True, type=str, help="Enter the targ
 parser.add_argument("-p","--passfile",required=True,type=str,help="Enter the path of file containing password list")
 parser.add_argument("-t","--threads",type=int,help="enter the number of threads. Default : 20")
 parser.add_argument("-u","--user",default=20,required=True,type=str,help="enter the Username to connect to provided host")
-
+parser.add_argument("-m","--mutate",action="store_true",help="Enable this Flag if you want to mutate the wordlists")
 args = parser.parse_args()
 
 
@@ -25,7 +25,7 @@ host = args.host
 user = args.user
 passfile = args.passfile
 threads = args.threads if args.threads else 20
-
+mutant = args.mutate
 
 def passwd(passfile):
     with open(passfile , 'r', encoding='utf-8') as f:
@@ -45,13 +45,6 @@ event_done = threading.Event()
 
 trueuser = None
 truepasswd = None
-
-
-for userc in users:
-    for password in passwords:
-        combo_queue.put((userc,password))
-
-
 
 
 
@@ -80,6 +73,16 @@ def smart_mutate(base_word):
 
     return mutations
 
+
+if mutant:
+    for userc in users:
+        for base in passwords:
+            for password in smart_mutate(base):
+                combo_queue.put((userc, password))
+else:
+    for userc in users:
+        for password in passwords:
+            combo_queue.put((userc,password))
 
 
 
