@@ -3,6 +3,12 @@ import argparse
 import threading
 from  queue import Queue
 
+
+combo_queue = Queue()
+result_lock = Lock()
+stop_event = Event()
+
+
 parser = argparse.ArgumentParser(description="Basic FTP tester")
 
 
@@ -41,8 +47,15 @@ trueuser = None
 truepasswd = None
 
 
+for userc in users:
+    for password in passwords:
+        combo_queue.put((userc,password))
 
 
+
+
+
+        
 def smart_mutate(base_word):
     leet_map = {'a': '@', 'i': '1', 'e': '3', 'o': '0', 's': '$'}
 
@@ -74,7 +87,9 @@ def smart_mutate(base_word):
 
 def workers():
     global trueuser, truepasswd
-    while not event_done.is_set():
+    while not combo_queue.empty():
+        if event_done.is_set():
+            return
         try:
             password = next(passwords_iter)
         except StopIteration:
