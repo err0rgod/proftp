@@ -29,9 +29,11 @@ passwords = passwd(passfile)
 passwords_iter = iter(passwords)
 event_done = threading.Event()
 
-
+trueuser = None
+truepasswd = None
 
 def workers():
+    global trueuser, truepasswd
     while not event_done.is_set():
         try:
             password = next(passwords_iter)
@@ -45,6 +47,8 @@ def workers():
                 print("===========================================================================\n")
                 print(" The Password was Found and Connection was Success\n")
                 print(f"Connect with {host} as {user}  :   {password}\n")
+                trueuser = user
+                truepasswd = password
                 event_done.set()
                 break
         
@@ -83,3 +87,6 @@ for _ in range(threads):
 
 for t in thread_list:
     t.join()
+
+if trueuser and truepasswd:
+    print(trueuser)
