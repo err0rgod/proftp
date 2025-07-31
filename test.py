@@ -1,16 +1,24 @@
 import ftplib
 import argparse
 import threading
-from  queue import Queue
+from  queue import Queue, Empty
+from itertools import product
+
+
 
 parser = argparse.ArgumentParser(description="Basic FTP tester")
 
 
 parser.add_argument("-ho","--host",required=True, type=str, help="Enter the target to test ftp")
-parser.add_argument("-p","--passfile",required=True,type=str,help="Enter the path of file containing password list")
+parser.add_argument("-p","--passfile",type=str,help="Enter the path of file containing password list")
 parser.add_argument("-t","--threads",default=20,type=int,help="enter the number of threads. Default : 20")
-parser.add_argument("-u","--user",required=True,type=str,help="enter the Username to connect to provided host")
-parser.add_argument("-U","--userfile",required=True,type=str,help="enter the Username to connect to provided host")
+parser.add_argument("-u","--user",type=str,help="enter the Username to connect to provided host")
+parser.add_argument("-U","--userfile",type=str,help="enter the Username to connect to provided host")
+parser.add_argument("-g","--genpass", action="store_true", help="Enable password generation mode")
+parser.add_argument("--min", type=int, default=4, help="Minimum password length")
+parser.add_argument("--max", type=int, default=8, help="Maximum password length")
+parser.add_argument("--charset", type=str, default="abc123", help="Characters to use for password generation")
+
 
 args = parser.parse_args()
 
@@ -22,6 +30,26 @@ passfile = args.passfile
 userfile = args.userfile
 threads = args.threads if args.threads else 20
 
+combo_queue = Queue()
+
+
+if not args.user and not args.userfile:
+    parser.error("You must provide either -u (single username) or -U (username file)")
+
+if args.user and args.userfile:
+    parser.error("You can only use one of -u (single) or -U (list), not both")
+
+
+
+
+
+
+def generate_passwords(charset, min_len, max_len):
+    for length in range(min_len, max_len + 1):
+        for pwd_tuple in product(charset, repeat=length):
+            yield ''.join(pwd_tuple)
+
+
 
 
 def passwd(passfile):
@@ -29,7 +57,9 @@ def passwd(passfile):
         return[line.strip('\n') for line in f]
 
 
-passwords = passwd(passfile)
+#passwords = passwd(passfile)
+
+
 
 
 
@@ -37,14 +67,38 @@ def load_usernames(userfile):
     with open(userfile, 'r', encoding='utf-8') as f:
         return [line.strip() for line in f]
 
-usernames = load_usernames(userfile)
 
 
+if args.user:
+    usernames = [args.user]
+else:
+  
+    usernames = load_usernames(userfile)
 
+
+# Determine how to fill the pass_queue
+if args.genpass:
+    def generate_passwords(charset, min_len, max_len):
+        from itertools import product
+        for length in range(min_len, max_len + 1):
+            for pwd_tuple in product(charset, repeat=length):
+                yield ''.join(pwd_tuple)
+
+    passwords = generate_passwords(args.charset, args.min, args.max)
+else:
+    passwords = passwd(passfile)
+
+passwords = list(passwords)
+
+for user in usernames:
+    for pwd in passwords:
+        combo_queue.put((user, pwd))
 
 pass_queue = Queue()
-for pwd in passwords:
-    pass_queue.put(pwd)
+
+
+
+
 
 
 
@@ -61,8 +115,8 @@ def workers():
     global trueuser, truepasswd
     while not event_done.is_set() and not pass_queue.empty():
         try:
-            password = pass_queue.get_nowait()
-        except queue.Empty:
+           user, password = combo_queue.get_nowait()
+        except Empty:
             break
 
         try:
