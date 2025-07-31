@@ -119,6 +119,9 @@ def workers():
         except Empty:
             break
 
+        if event_done.is_set():  # <- extra check to stop early
+            break
+
         try:
             with ftplib.FTP() as serve:
                 serve.connect(host,21,timeout=5)
