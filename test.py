@@ -113,7 +113,7 @@ truepasswd = None
 
 def workers():
     global trueuser, truepasswd
-    while not event_done.is_set() and not pass_queue.empty():
+    while not event_done.is_set() and not combo_queue.empty():
         try:
            user, password = combo_queue.get_nowait()
         except Empty:
