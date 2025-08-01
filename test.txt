@@ -1,1 +1,2 @@
 python .\basic.py -ho test.rebex.net -u demo -p pass.txt
+python .\test.py -ho test.rebex.net -U user.txt -g --min 8 --max 8 --charset password

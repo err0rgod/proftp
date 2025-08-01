@@ -88,11 +88,24 @@ if args.genpass:
 else:
     passwords = passwd(passfile)
 
+
+for user in usernames:
+    if args.genpass:
+        pwd_iter = generate_passwords(args.charset, args.min, args.max)
+    else:
+        pwd_iter = passwd(passfile)
+
+    for pwd in pwd_iter:
+        combo_queue.put((user, pwd))
+
+
+
+'''
 passwords = list(passwords)
 
 for user in usernames:
     for pwd in passwords:
-        combo_queue.put((user, pwd))
+        combo_queue.put((user, pwd))'''
 
 pass_queue = Queue()
 
