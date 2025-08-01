@@ -1,1 +1,12 @@
 complete the adv program, its as hell
+
+Save Valid Credentials to a File
+4. 📁 Anonymous Login Test
+
+2. 🕒 Timeout & Retry Attempts
+
+1. 🔁 Resume Mode
+
+7. 📊 Progress Indicator
+8. 🔒 SSL/TLS Mode Support (ftps)
+9. ☁️ Proxy or VPN routing (advanced)
